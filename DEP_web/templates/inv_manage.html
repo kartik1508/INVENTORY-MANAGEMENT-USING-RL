@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="main_box">
+    <div>
+        <form class="form" method="post" id="sm_form">
+            {% csrf_token %}
+            <p class="heading">Simulation Parameters</p>
+            <input class="input" id="max_units" placeholder="max units" type="Number" step="1">
+            <input class="input" id="fixed_cost" placeholder="fixed cost" type="Number" step="0.000001"> 
+            <input class="input" id="var_cost_per_cost" placeholder="variable cost per unit" type="Number" step="0.000001"> 
+            <input class="input" id="revenue_per_unit" placeholder="Revenue per unit" type="Number" step="0.000001"> 
+            <input class="input" id="poisson_paramter" placeholder="Poisson parameter" type="Number" step="0.000001"> 
+            <input class="input" id="hold_cost" placeholder="Hold Cost" type="Number" step="0.000001"> 
+            <button class="btn">Submit</button>
+            <!-- <p id="first">2</p> -->
+        </form>
+    </div>
+    <div id="ldr" class="ld" style="width: 100vw;height:100vh;position:fixed;top:0;left:0;display: flex;justify-content: center;align-items: center;">
+        <div class="lds-roller"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+    </div>
+    <div id="new_f" class="new_form">
+        <form class="form"  id="sm_f">
+            <p class="heading">Inventory Decisions</p>
+            <input class="input" id="cur-inv-level" placeholder="current inventory level" type="Number" step="1">
+            <button class="btn">Submit</button>
+        </form>
+        <div class="bottom_box">
+            <p>No of units to be ordered as per simulation parameters</p>
+            <p id="ans" style="margin-top: 10px;"></p>
+        </div>
+    </div>
+    
+</div>
+<script>
+    $('#ldr').hide()
+    $('#new_f').hide()
+    $('#sm_form').show()
+    $("#sm_f").submit(function (e) {
+        e.preventDefault();
+        console.log(JSON.parse(localStorage.getItem('op'))[$('#cur-inv-level').val()]);
+        $('#ans').text(JSON.parse(localStorage.getItem('op'))[$('#cur-inv-level').val()])
+    })
+    function sim_para() {
+        if(!$("#max_units").val() || !$("#fixed_cost").val() || !$("#var_cost_per_cost").val()||!$("#revenue_per_unit").val() ||!$("#poisson_paramter").val() || !$("#hold_cost").val() ){
+            alert('Enter all parameters.')
+            return;
+        }
+        $('#new_f').hide()
+        $('#sm_form').hide()
+        $('#ldr').show()
+        $.ajax({
+            method: "POST",
+            url: '/simulation_parameter/',
+            data:{
+                max_units:$("#max_units").val(),
+                fixed_cost:$("#fixed_cost").val(),
+                var_cost_per_cost:$("#var_cost_per_cost").val(),
+                revenue_per_unit:$("#revenue_per_unit").val(),
+                poisson_paramter:$("#poisson_paramter").val(),
+                hold_cost:$('#hold_cost').val(),
+                csrfmiddlewaretoken: $("input[name=csrfmiddlewaretoken]").val(),
+            },
+            success: function (res) {
+                localStorage.setItem('ov',JSON.stringify(res.data.ov))
+                localStorage.setItem('op',JSON.stringify(res.data.op))
+                $('#ldr').hide()
+                $('#sm_form').hide()
+                $('#new_f').show()
+            },
+            error: function (err) {
+                console.log(err);
+            }
+        })
+}
+// $('#first').text(JSON.parse(localStorage.getItem('op'))[2])
+    $("#sm_form").submit(function (e) {
+        e.preventDefault();
+        sim_para()
+    })
+</script>
+{% endblock %}
